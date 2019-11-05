@@ -44,6 +44,7 @@ namespace BookingMeet
 
 			app.UseHttpsRedirection();
 			app.UseStaticFiles();
+			//app.UseDefaultFiles();
 			if (!env.IsDevelopment())
 			{
 				app.UseSpaStaticFiles();
@@ -68,6 +69,8 @@ namespace BookingMeet
 				if (env.IsDevelopment())
 				{
 					spa.UseAngularCliServer(npmScript: "start");
+					//configuration for start Angular project one time!
+					//spa.UseProxyToSpaDevelopmentServer("http://localhost:4200");
 				}
 			});
 		}

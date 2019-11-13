@@ -2,11 +2,16 @@ using BookingMeet.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OAuth;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.SpaServices.AngularCli;
 
 namespace BookingMeet
 {
@@ -16,28 +21,44 @@ namespace BookingMeet
 		{
 			Configuration = configuration;
 		}
-
 		public IConfiguration Configuration { get; }
 
-		// This method gets called by the runtime. Use this method to add services to the container.
 		public void ConfigureServices(IServiceCollection services)
 		{
 			services.AddDbContext<ApplicationDbContext>(options =>
 				options.UseSqlServer(Configuration.GetConnectionString("IdentityConnection")));
-			services.AddDefaultIdentity<ApplicationUser>()
-				.AddRoles<IdentityRole>()
-				.AddEntityFrameworkStores<ApplicationDbContext>();
 
+			services.AddIdentity<ApplicationUser, IdentityRole>()
+				.AddEntityFrameworkStores<ApplicationDbContext>()
+				.AddDefaultTokenProviders();
+
+			services.AddAuthentication()
+			//.AddCookie(options =>
+			//{
+			//	options.Cookie.SameSite = SameSiteMode.None;
+			//})
+			.AddGoogle("Google", options =>
+			{
+				options.ClientId = "652368834323-kchmgulul1qok09kuadov9to3mhe3qqa.apps.googleusercontent.com";
+				options.ClientSecret = "7qI6F9X71opU03iWrfifqFGC";
+				options.Events = new OAuthEvents
+				{
+					OnRemoteFailure = (RemoteFailureContext context) =>
+					{
+						context.Response.Redirect("/home/denied");
+						context.HandleResponse();
+						return Task.CompletedTask;
+					}
+				};
+			});
 
 			services.AddControllersWithViews();
-			// In production, the Angular files will be served from this directory
 			services.AddSpaStaticFiles(configuration =>
 			{
-				configuration.RootPath = "ClientApp/dist";
+				configuration.RootPath = ".../.../wwwroot";
 			});
 		}
 
-		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
 		public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
 		{
 			if (env.IsDevelopment())
@@ -47,19 +68,23 @@ namespace BookingMeet
 			else
 			{
 				app.UseExceptionHandler("/Error");
-				// The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
 				app.UseHsts();
 			}
-
 			app.UseHttpsRedirection();
 			app.UseStaticFiles();
-			//app.UseDefaultFiles();
+			app.UseDefaultFiles();
+			//app.UseCookiePolicy(new CookiePolicyOptions
+			//{
+			//	MinimumSameSitePolicy = SameSiteMode.None
+			//});
+
+			app.UseAuthentication();
+			app.UseRouting();
+
 			if (!env.IsDevelopment())
 			{
 				app.UseSpaStaticFiles();
 			}
-
-			app.UseRouting();
 
 			app.UseEndpoints(endpoints =>
 			{
@@ -70,20 +95,13 @@ namespace BookingMeet
 
 			app.UseSpa(spa =>
 			{
-				// To learn more about options for serving an Angular SPA from ASP.NET Core,
-				// see https://go.microsoft.com/fwlink/?linkid=864501
-
 				spa.Options.SourcePath = "ClientApp";
-
 				if (env.IsDevelopment())
 				{
-					spa.UseAngularCliServer(npmScript: "start");
-					//configuration for start Angular project one time!
-					//spa.UseProxyToSpaDevelopmentServer("http://localhost:4200");
+					//spa.UseAngularCliServer(npmScript: "start");
+					spa.UseProxyToSpaDevelopmentServer("http://localhost:4200");
 				}
 			});
-
-			app.UseAuthentication();
 		}
 	}
 }

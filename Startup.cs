@@ -33,10 +33,10 @@ namespace BookingMeet
 				.AddDefaultTokenProviders();
 
 			services.AddAuthentication()
-			//.AddCookie(options =>
-			//{
-			//	options.Cookie.SameSite = SameSiteMode.None;
-			//})
+			.AddCookie(options =>
+			{
+				options.Cookie.SameSite = SameSiteMode.None;
+			})
 			.AddGoogle("Google", options =>
 			{
 				options.ClientId = "652368834323-kchmgulul1qok09kuadov9to3mhe3qqa.apps.googleusercontent.com";
@@ -70,14 +70,14 @@ namespace BookingMeet
 				app.UseExceptionHandler("/Error");
 				app.UseHsts();
 			}
+
 			app.UseHttpsRedirection();
 			app.UseStaticFiles();
 			app.UseDefaultFiles();
-			//app.UseCookiePolicy(new CookiePolicyOptions
-			//{
-			//	MinimumSameSitePolicy = SameSiteMode.None
-			//});
-
+			app.UseCookiePolicy(new CookiePolicyOptions
+			{
+				MinimumSameSitePolicy = SameSiteMode.None
+			});
 			app.UseAuthentication();
 			app.UseRouting();
 
@@ -98,8 +98,8 @@ namespace BookingMeet
 				spa.Options.SourcePath = "ClientApp";
 				if (env.IsDevelopment())
 				{
-					//spa.UseAngularCliServer(npmScript: "start");
-					spa.UseProxyToSpaDevelopmentServer("http://localhost:4200");
+					spa.UseAngularCliServer(npmScript: "start");
+					//spa.UseProxyToSpaDevelopmentServer("http://localhost:4200");
 				}
 			});
 		}

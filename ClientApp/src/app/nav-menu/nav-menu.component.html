@@ -1,11 +1,10 @@
-<header>
+<header *ngIf="isAuthorize">
   <nav
-    class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3"
-    *ngIf="accountService.isUserAuthenticated">
+    class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
     <div class="container">
-      <a class="navbar-brand" [routerLink]="['/home']">BookingMeet</a>
-      <button
-        class="navbar-toggler"
+      <a class="navbar-brand"
+         [routerLink]="['/home']">BookingMeet</a>
+      <button class="navbar-toggler"
         type="button"
         data-toggle="collapse"
         data-target=".navbar-collapse"
@@ -20,25 +19,26 @@
         [ngClass]="{ show: isExpanded }"
       >
         <ul class="navbar-nav flex-grow">
-          <li
-            class="nav-item"
-            [routerLinkActive]="['link-active']"
-            [routerLinkActiveOptions]="{ exact: true }"
-          >
-            <a class="nav-link text-dark" [routerLink]="['/']">Google authentication</a>
-          </li>
-          <li class="nav-item" [routerLinkActive]="['link-active']">
-            <a class="nav-link text-dark" [routerLink]="['/counter']"
+          <li class="nav-item"
+              [routerLinkActive]="['link-active']">
+            <a class="nav-link text-dark"
+               [routerLink]="['/counter']"
               >Counter</a
             >
           </li>
-          <li class="nav-item" [routerLinkActive]="['link-active']">
-            <a class="nav-link text-dark" [routerLink]="['/fetch-data']"
+          <li class="nav-item"
+              [routerLinkActive]="['link-active']">
+            <a class="nav-link text-dark"
+               [routerLink]="['/fetch-data']"
               >Fetch data</a
             >
           </li>
           <li class="nav-item">
-              <button type="submit" class="btn btn-outline-primary offset-md-3 col-md-6" (click)="accountService.logout()">Log out</button>
+            <a class="nav-link text-dark"
+               [routerLink]=""
+               (click)="this.accountService.logout()"
+            >Log out!
+            </a>
           </li>
         </ul>
       </div>

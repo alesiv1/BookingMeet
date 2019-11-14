@@ -4,7 +4,6 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using BookingMeet.Models;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,10 +14,13 @@ namespace BookingMeet.Controllers
     {
 		private readonly SignInManager<ApplicationUser> _signInManager;
 		private readonly UserManager<ApplicationUser> _userManager;
-		public AuthenticationController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager)
+		private readonly RoleManager<IdentityRole> _roleManager;
+
+		public AuthenticationController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
 		{
 			_signInManager = signInManager;
 			_userManager = userManager;
+			_roleManager = roleManager;
 		}
 
 		[Route("authentication/SignInWithGoogle")]
@@ -34,17 +36,18 @@ namespace BookingMeet.Controllers
 			var info = await _signInManager.GetExternalLoginInfoAsync();
 			if (info == null)
 				return Redirect("http://localhost:55169");
-			var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false);
 
-			if (!result.Succeeded) //user does not exist yet
+			var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false);
+			if (!result.Succeeded)
 			{
 				var newUser = new ApplicationUser
 				{
-					UserName = "Andrew",
+					UserName = info.Principal.FindFirstValue(ClaimTypes.Name).Replace(" ", ""),
 					Email = info.Principal.FindFirstValue(ClaimTypes.Email),
 					EmailConfirmed = true,
 					PhoneNumber = info.Principal.FindFirstValue(ClaimTypes.MobilePhone),
-			};
+				};
+
 				var createResult = await _userManager.CreateAsync(newUser);
 				if (!createResult.Succeeded)
 					throw new Exception(createResult.Errors.Select(e => e.Description).Aggregate((errors, error) => $"{errors}, {error}"));
@@ -53,6 +56,19 @@ namespace BookingMeet.Controllers
 				var newUserClaims = info.Principal.Claims.Append(new Claim("userId", newUser.Id));
 				await _userManager.AddClaimsAsync(newUser, newUserClaims);
 				await _signInManager.SignInAsync(newUser, isPersistent: false);
+
+				var role = "User";
+				var roleExist = await _roleManager.RoleExistsAsync(role);
+				IdentityResult identityRoesult = null;
+				if (!roleExist)
+				{
+					identityRoesult = await _roleManager.CreateAsync(new IdentityRole(role));
+				}
+				var userRoles = await _userManager.GetRolesAsync(newUser);
+				if (!userRoles.Contains(role))
+				{
+					await _userManager.AddToRoleAsync(newUser, role);
+				}
 				await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
 			}
 
@@ -63,7 +79,7 @@ namespace BookingMeet.Controllers
 		public async Task<IActionResult> Logout()
 		{
 			await _signInManager.SignOutAsync();
-			return Redirect("http://localhost:55169/home");
+			return Redirect("http://localhost:55169");
 		}
 
 		[Route("authentication/isAuthenticated")]
@@ -72,14 +88,7 @@ namespace BookingMeet.Controllers
 			return new ObjectResult(User.Identity.IsAuthenticated);
 		}
 
-		[Route("authentication/fail")]
-		public IActionResult Fail()
-		{
-			return Unauthorized();
-		}
-
 		[Route("authentication/name")]
-		[Authorize]
 		public IActionResult Name()
 		{
 			var claimsPrincial = (ClaimsPrincipal)User;

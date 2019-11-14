@@ -2,7 +2,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import {APP_INITIALIZER, NgModule} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
-import { RouterModule } from '@angular/router';
+import {CanActivate, RouterModule} from '@angular/router';
 
 import { AppComponent } from './app.component';
 import { NavMenuComponent } from './nav-menu/nav-menu.component';
@@ -15,6 +15,7 @@ import {ToastrModule} from 'ngx-toastr';
 import {Interceptor401Service} from './google-authentication/interceptor401.service';
 import {checkIfUserIsAuthenticated} from './google-authentication/check-login-intializer';
 import {AccountService} from './google-authentication/account.service';
+
 
 @NgModule({
   declarations: [
@@ -32,11 +33,11 @@ import {AccountService} from './google-authentication/account.service';
     HttpClientModule,
     FormsModule,
     RouterModule.forRoot([
-      {path: '', component: GoogleAuthenticationComponent, pathMatch: 'full'},
-      {path: 'counter', component: CounterComponent},
-      {path: 'fetch-data', component: FetchDataComponent},
-      {path: 'home', component: HomeComponent},
-      {path: '**', redirectTo: '/' }
+      {path: '', component: GoogleAuthenticationComponent},
+      {path: 'counter', canActivate: [AppModule], component: CounterComponent},
+      {path: 'fetch-data', canActivate: [AppModule], component: FetchDataComponent},
+      {path: 'home', canActivate: [AppModule] , component: HomeComponent},
+      {path: '**', component: GoogleAuthenticationComponent }
     ])
   ],
   providers: [
@@ -45,5 +46,12 @@ import {AccountService} from './google-authentication/account.service';
   ],
   bootstrap: [AppComponent]
 })
-export class AppModule {}
+export class AppModule implements CanActivate {
+
+    constructor(private service: AccountService) {}
+
+    public canActivate() {
+      return this.service.isUserAuthenticated;
+    }
+}
 
